@@ -5,7 +5,6 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from openai import OpenAI  # Using the OpenAI client with OpenRouter configuration
 from dotenv import load_dotenv, find_dotenv
 
-# Configure logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
