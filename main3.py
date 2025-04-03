@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import logging
 import asyncio  # Import asyncio to get the running loop
@@ -71,6 +72,10 @@ def perform_analysis(sentence: str) -> str:
         except Exception as e:
             logger.error("Attempt %d: Error during perform_analysis: %s", attempt+1, e)
     return None
+
+# def escape_md(text: str) -> str:
+#     escape_chars = r'_[]()~`>#+-=|{}.!\\'
+#     return re.sub(f'([{re.escape(escape_chars)}])', r'\\\1', text)
 
 async def analyze_message(update: Update, context: ContextTypes.DEFAULT_TYPE, sentence: str) -> None:
     """
