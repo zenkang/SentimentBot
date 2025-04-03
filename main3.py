@@ -11,9 +11,7 @@ from telegram.ext import (
     ContextTypes,
 )
 from openai import OpenAI  # Using the OpenAI client with OpenRouter configuration
-from dotenv import load_dotenv
 
-# Load environment variables from a .env file, if available
 
 # Configure logging
 logging.basicConfig(
