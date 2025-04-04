@@ -23,6 +23,10 @@ logger = logging.getLogger(__name__)
 # Retrieve tokens from environment variables
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+OPENROUTER_API_KEY2 = os.getenv("OPENROUTER_API_KEY2")
+MODEL = os.getenv("MODEL")
+MODEL2 = os.getenv("MODEL2")
+
 if not TELEGRAM_TOKEN or not OPENROUTER_API_KEY:
     logger.error("Please set TELEGRAM_TOKEN and OPENROUTER_API_KEY environment variables")
     exit(1)
@@ -49,7 +53,7 @@ def perform_analysis(sentence: str) -> str:
         print(f"\nAttempt {attempt+1} for input: {sentence}\n")
         try:
             response = client.chat.completions.create(
-                model="deepseek/deepseek-r1:free",
+                model=MODEL,
                 messages=[
                     {
                         "role": "system",
