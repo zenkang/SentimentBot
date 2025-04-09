@@ -1,7 +1,8 @@
+import os
 import re
+import time
 import logging
 import asyncio  # Import asyncio to get the running loop
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -9,10 +10,8 @@ from telegram.ext import (
     MessageHandler,
     filters,
     ContextTypes,
-    CallbackQueryHandler,
 )
 from openai import OpenAI  # Using the OpenAI client with OpenRouter configuration
-import config
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -21,12 +20,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Retrieve tokens and model identifiers from environment variables
-TELEGRAM_TOKEN = config.TELEGRAM_TOKEN
-OPENROUTER_API_KEY = config.OPENROUTER_API_KEY
-OPENROUTER_API_KEY2 = config.OPENROUTER_API_KEY2
-OPENROUTER_API_KEY3 = config.OPENROUTER_API_KEY3
-MODEL = config.MODEL
-MODEL2 = config.MODEL2
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+OPENROUTER_API_KEY2 = os.getenv("OPENROUTER_API_KEY2")
+MODEL = os.getenv("MODEL")
+MODEL2 = os.getenv("MODEL2")
 
 if not TELEGRAM_TOKEN or not OPENROUTER_API_KEY or not OPENROUTER_API_KEY2:
     logger.error("Please set TELEGRAM_TOKEN, OPENROUTER_API_KEY and OPENROUTER_API_KEY2 environment variables")
@@ -42,11 +40,6 @@ client = OpenAI(
 client2 = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=OPENROUTER_API_KEY2,
-)
-
-client3 = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=OPENROUTER_API_KEY3,
 )
 
 # Dictionary to track chat modes per chat ("analysis", "advice", or "rizz")
@@ -200,7 +193,7 @@ def perform_rizz(chat_id: int, message: str) -> str:
     for attempt in range(max_attempts):
         print(f"\nRizz Attempt {attempt+1} for chat {chat_id} with input: {message}\n")
         try:
-            response = client3.chat.completions.create(
+            response = client2.chat.completions.create(
                 model=MODEL2,
                 messages=rizz_context[chat_id]
             )
@@ -255,18 +248,17 @@ async def rizz_message(update: Update, context: ContextTypes.DEFAULT_TYPE, messa
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
-    Switches the chat to advice mode (default), clears any advice or rizz context,
-    sends a welcome message, and then displays the inline menu.
+    Switches the chat to advice mode, clears any advice or rizz context, and sends a welcome message.
     """
     chat_id = update.message.chat_id
-    chat_modes[chat_id] = "advice"  # default mode is advice
+    chat_modes[chat_id] = "advice"
     if chat_id in advice_context:
         del advice_context[chat_id]
     if chat_id in rizz_context:
         del rizz_context[chat_id]
-    await send_html_message(update, "Welcome to DateAI!\nCC0002 project by team 2\n\nI am your personal AI dating assistant...\n\n-I can give advice and answer questions:\n/advice \n\n-Analyse messages for sentiment:\n/sentiment\n\n-Chat with me! :)\n/rizz\n\n/menu to display the menu...")
-    await menu_inline_command(update, context)
-
+    await send_html_message(update, 
+        "Welcome..."
+    )
 
 async def analyze_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
@@ -279,11 +271,10 @@ async def analyze_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if chat_id in rizz_context:
         del rizz_context[chat_id]
     sentence = " ".join(context.args)
-    if sentence:
-        await analyze_message(update, context, sentence)
-    else:
-        await send_html_message(update, "In sentiment mode")
-        
+    if not sentence:
+        await send_html_message(update, "Please provide a message after the /sentiment command")
+        return
+    await analyze_message(update, context, sentence)
 
 async def advice_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
@@ -298,7 +289,7 @@ async def advice_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if question:
         await advice_message(update, context, question)
     else:
-        await send_html_message(update, "Hello! I am your friendly AI dating coach 😊\nAsk me anything!! I'm happy to help:)")
+        await send_html_message(update, "Now in advice mode. Please send your dating questions or advice requests.")
 
 async def rizz_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
@@ -315,7 +306,7 @@ async def rizz_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     if message:
         await rizz_message(update, context, message)
     else:
-        await send_html_message(update, "Ni hao fine shyt😊")
+        await send_html_message(update, "Now in rizz mode. Please send your messages for flirtatious replies.")
 
 async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
@@ -333,49 +324,10 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     else:
         await analyze_message(update, context, sentence)
 
-async def menu_inline_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    keyboard = [
-        [InlineKeyboardButton("/Advice", callback_data="menu_advice")],
-        [InlineKeyboardButton("/Sentiment", callback_data="menu_sentiment")],
-        [InlineKeyboardButton("/Rizz", callback_data="menu_rizz")]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Select a mode:", reply_markup=reply_markup)
-
-async def menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    query = update.callback_query
-    await query.answer()  # Acknowledge the button press
-    data = query.data
-    chat_id = query.message.chat_id
-
-    if data == "menu_advice":
-        chat_modes[chat_id] = "advice"
-        if chat_id in advice_context:
-            del advice_context[chat_id]
-        if chat_id in rizz_context:
-            del rizz_context[chat_id]
-        await query.edit_message_text("Hello! I am your friendly AI dating coach 😊\nAsk me anything!! I'm happy to help:)")
-    elif data == "menu_sentiment":
-        chat_modes[chat_id] = "analysis"
-        if chat_id in advice_context:
-            del advice_context[chat_id]
-        if chat_id in rizz_context:
-            del rizz_context[chat_id]
-        await query.edit_message_text("Switched to sentiment analysis mode... Send your messages for analysis")
-    elif data == "menu_rizz":
-        chat_modes[chat_id] = "rizz"
-        if chat_id in advice_context:
-            del advice_context[chat_id]
-        if chat_id in rizz_context:
-            del rizz_context[chat_id]
-        await query.edit_message_text("Ni hao fine shyt😊")
-
 def main() -> None:
     """Start the bot."""
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("menu", menu_inline_command))
-    app.add_handler(CallbackQueryHandler(menu_callback, pattern="^menu_"))
     app.add_handler(CommandHandler("sentiment", analyze_command))
     app.add_handler(CommandHandler("advice", advice_command))
     app.add_handler(CommandHandler("rizz", rizz_command))

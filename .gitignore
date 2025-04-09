@@ -1,3 +1,4 @@
 .env
 .venv/
 gitProcess.txt
+config.py
