@@ -238,13 +238,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👨‍💻 Contact
 
 **Developer**: Kang Yi, Zen -Year 1 Computer Science Student  
-**Project**: CC0002 Team 2 Date AI bot 
+**Project**: CC0002 Team 2 Date AI
 **Bot**: [@DateAnalysisBot](https://t.me/DateAnalysisBot)
-
----
-
-<div align="center">
-  <strong>Built with ❤️ using Python and AI</strong>
-  <br>
-  <em>Making conversations smarter, one message at a time</em>
-</div>
