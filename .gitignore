@@ -1,4 +1,5 @@
 .env
-.venv/
+venv/
 gitProcess.txt
 config.py
+__pycache__
