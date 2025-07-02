@@ -105,7 +105,7 @@ A sophisticated Telegram bot that combines AI-powered sentiment analysis with da
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/SentimentBot.git
+   git clone https://github.com/zenkang/SentimentBot.git
    cd SentimentBot
    ```
 
